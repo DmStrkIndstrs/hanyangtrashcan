@@ -57,6 +57,26 @@ kbd{font-family:var(--body);font-size:12px;border:1px solid var(--line);border-b
 .rules div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
 .rules b{display:block;margin-bottom:2px}
 .rules p{margin:0;font-size:13.5px;color:var(--muted)}
+.rank{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.rank-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px 20px}
+.rank h2{font-family:var(--display);font-weight:400;font-size:26px;margin:0;line-height:1.1}
+.rank-sub,.rank-status{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.nick{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nick label{font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.nick input{font:inherit;width:11em;max-width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.nick input:focus-visible{outline:2px solid var(--hy);outline-offset:1px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.rank-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rank-list li{display:grid;grid-template-columns:2.6em 1fr auto;align-items:center;gap:8px;padding:8px 6px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.rank-list li:first-child{border-top:0}
+.rank-list .rk{font-family:var(--display);font-size:18px;color:var(--muted);text-align:center}
+.rank-list li:nth-child(1) .rk{color:var(--chili)}
+.rank-list li:nth-child(2) .rk,.rank-list li:nth-child(3) .rk{color:var(--broth)}
+.rank-list .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.rank-list .tm{font-weight:700}
+.rank-list li.me{background:color-mix(in srgb,var(--hy) 12%,transparent);border-radius:8px}
+.rank-list li.me .nm::after{content:" (나)";color:var(--hy);font-weight:700}
+.rank-list li.empty{display:block;color:var(--muted);font-size:14px}
 @media (max-width:520px){.card{padding:12px 14px;gap:6px}.card p{font-size:12.5px}.btn{padding:8px 14px}.dump{flex:1 1 100%}}
 @media (prefers-reduced-motion:reduce){.meter i{transition:none}}
 </style>
@@ -94,8 +114,28 @@ kbd{font-family:var(--body);font-size:12px;border:1px solid var(--line);border-b
     <div><b>마라탕은 냄새가 난다</b><p>마라탕을 들고 가까이 지나가면 여사님이 뒤를 돌아봅니다. 국물이 많아서 버리는 데도 더 오래 걸려요.</p></div>
     <div><b>달리면 소리가 난다</b><p>Shift로 달리면 빠르지만 근처 여사님이 소리 난 쪽을 쳐다봅니다. 벽과 서가 뒤로 숨으면 시야가 가려져요.</p></div>
   </div>
+
+  <section class="rank" aria-labelledby="rankTitle">
+    <div class="rank-head">
+      <div>
+        <h2 id="rankTitle">완벽 범죄 랭킹</h2>
+        <p class="rank-sub">세 장소를 모두 빠져나온 총 시간 순. 걸려서 다시 한 시간도 포함돼요.</p>
+      </div>
+      <form class="nick" id="nickForm">
+        <label for="nick">닉네임</label>
+        <input id="nick" maxlength="12" autocomplete="off" spellcheck="false">
+        <button class="btn" id="nickSave" type="submit">저장</button>
+      </form>
+    </div>
+    <p class="rank-status" id="rankStatus">랭킹 서버에 연결하는 중…</p>
+    <ol class="rank-list" id="rankList"></ol>
+  </section>
 </div>
 
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 (() => {
 const W = 960, H = 600, FOV = 1.25, RANGE = 235;
@@ -346,13 +386,14 @@ function intro() {
     <button class="btn" data-act="go">잠입 시작</button></div>`);
 }
 function caught() {
-  G.state = 'caught'; G.shake = 0.4; dumpHeld = false;
+  G.state = 'caught'; G.shake = 0.4; dumpHeld = false; G.total += G.time;
   const p = G.player, type = p.carry ? p.carry.type : 'mala';
   for (const c of G.cleaners) { c.state = 'alert'; c.t = 99; c.lx = p.x; c.ly = p.y; }
   const c = G.cleaners.reduce((a, b) => Math.hypot(a.x - p.x, a.y - p.y) < Math.hypot(b.x - p.x, b.y - p.y) ? a : b);
   say(c, '학생!!', 99);
   show(`<div class="card"><h2>딱 걸렸다</h2><p class="quote">“${pick(CAUGHT[type])}”</p>
     <p>${G.L.name} · ${G.delivered}/${G.foods.length}개 처리 · ${fmt(G.time)}</p>
+    <p>걸린 시간도 랭킹 기록에 더해져요. 누적 ${fmt(G.total)}</p>
     <button class="btn" data-act="retry">다시 잠입하기</button></div>`);
 }
 function clearLevel() {
@@ -361,9 +402,16 @@ function clearLevel() {
   if (nb) { best[G.lv] = G.time; saveBest(); }
   if (G.lv === LEVELS.length - 1) {
     show(`<div class="card"><h2>완벽 범죄… 일까요?</h2>
-      <p>세 군데 모두 들키지 않았어요. 총 ${fmt(G.total)}${nb ? ' · 이번 스테이지 신기록' : ''}</p>
+      <p>세 군데 모두 빠져나왔어요. 랭킹 기록 <b>${fmt(G.total)}</b></p>
+      <p id="rankMsg">랭킹 등록 중…</p>
       <p class="quote">사실 마라탕 국물은 개수대에, 건더기는 음식물 쓰레기통에 따로 버려야 여사님이 덜 고생하세요.</p>
       <button class="btn" data-act="restart">처음부터 다시</button></div>`);
+    const msg = t => { const el = $('rankMsg'); if (el) el.textContent = t; };
+    (window.HYRank ? window.HYRank.submit(G.total) : Promise.resolve(null)).then(r => {
+      if (!r) msg('랭킹 서버가 연결되지 않아 기록을 올리지 못했어요.');
+      else if (r.improved) msg(r.rank ? `내 최고 기록 갱신! 현재 ${r.rank}위` : '내 최고 기록 갱신! (TOP 20 밖)');
+      else msg(`내 최고 기록은 ${fmt(r.best)}이에요${r.rank ? ` · 현재 ${r.rank}위` : ''}.`);
+    }).catch(() => msg('랭킹 등록에 실패했어요. 잠시 후 다시 시도해주세요.'));
   } else {
     show(`<div class="card"><h2>처리 완료!</h2><p>${G.L.name}를 ${fmt(G.time)}만에 빠져나왔어요${nb ? ' · 신기록' : ''}.</p>
       <button class="btn" data-act="next">다음 장소로</button></div>`);
@@ -374,7 +422,7 @@ ov.addEventListener('click', e => {
   const act = a.dataset.act;
   if (act === 'start' || act === 'restart') { G.total = 0; loadLevel(0); intro(); }
   else if (act === 'next') { loadLevel(G.lv + 1); intro(); }
-  else if (act === 'retry') { G.total = 0; loadLevel(G.lv); intro(); }
+  else if (act === 'retry') { loadLevel(G.lv); intro(); }
   else if (act === 'go') { G.state = 'play'; hide(); cv.focus({ preventScroll: true }); }
 });
 
@@ -573,6 +621,94 @@ function frame(now) {
 menu();
 if (document.fonts && document.fonts.load) document.fonts.load('600 14px "IBM Plex Sans KR"').catch(() => {});
 requestAnimationFrame(frame);
+})();
+</script>
+<script>
+/* ---------- 익명 로그인 + 랭킹 (Firebase) ---------- */
+(() => {
+const $ = id => document.getElementById(id);
+const listEl = $('rankList'), statusEl = $('rankStatus'), nickEl = $('nick'), saveBtn = $('nickSave');
+const ADJ = ['수상한', '조용한', '배고픈', '은밀한', '졸린', '매운맛', '날쌘', '대담한'];
+const NOUN = ['새내기', '공대생', '복학생', '대학원생', '조교', '화석', '휴학생', '편입생'];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cleanName = s => s.replace(/\s+/g, ' ').trim().slice(0, 12);
+const fmt = t => Number(t).toFixed(1) + '초';
+
+let name = '';
+try { name = localStorage.getItem('hy-nick') || ''; } catch (e) {}
+if (!name) name = `${ADJ[Math.floor(Math.random() * ADJ.length)]} ${NOUN[Math.floor(Math.random() * NOUN.length)]}${Math.floor(Math.random() * 90 + 10)}`;
+nickEl.value = name;
+const keepName = () => { try { localStorage.setItem('hy-nick', name); } catch (e) {} };
+keepName();
+
+const cfg = window.FIREBASE_CONFIG;
+if (!cfg || !window.firebase) {
+  statusEl.textContent = '랭킹 서버가 아직 연결되지 않았어요. 지금은 게임만 할 수 있어요.';
+  listEl.innerHTML = '<li class="empty">firebase-config.js에 Firebase 설정을 넣으면 랭킹이 열려요.</li>';
+  saveBtn.disabled = true;
+  $('nickForm').addEventListener('submit', e => { e.preventDefault(); name = cleanName(nickEl.value) || name; nickEl.value = name; keepName(); });
+  window.HYRank = { submit: async () => null };
+  return;
+}
+
+firebase.initializeApp(cfg);
+const auth = firebase.auth(), db = firebase.firestore();
+const col = db.collection('scores');
+let user = null, rows = [];
+
+const ready = auth.signInAnonymously().then(c => {
+  user = c.user;
+  statusEl.textContent = `익명으로 로그인됨 · ${name}`;
+  render();
+  return user;
+}).catch(err => {
+  statusEl.textContent = '익명 로그인에 실패했어요. Firebase 콘솔에서 익명 로그인이 켜져 있는지 확인해주세요.';
+  throw err;
+});
+
+function render() {
+  if (!rows.length) { listEl.innerHTML = '<li class="empty">아직 기록이 없어요. 첫 완벽 범죄의 주인공이 되어보세요.</li>'; return; }
+  listEl.innerHTML = rows.map((r, i) =>
+    `<li class="${user && r.id === user.uid ? 'me' : ''}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="tm">${fmt(r.total)}</span></li>`
+  ).join('');
+}
+async function load() {
+  const snap = await col.orderBy('total').limit(20).get();
+  rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  render();
+}
+const myRank = () => { const i = user ? rows.findIndex(r => r.id === user.uid) : -1; return i >= 0 ? i + 1 : null; };
+load().catch(() => { listEl.innerHTML = '<li class="empty">랭킹을 불러오지 못했어요.</li>'; });
+
+async function submit(total) {
+  await ready;
+  total = Math.round(total * 10) / 10;
+  const ref = col.doc(user.uid), cur = await ref.get();
+  if (cur.exists && cur.data().total <= total) {
+    await load();
+    return { improved: false, best: cur.data().total, rank: myRank() };
+  }
+  await ref.set({ name, total, at: firebase.firestore.FieldValue.serverTimestamp() });
+  await load();
+  return { improved: true, best: total, rank: myRank() };
+}
+window.HYRank = { submit };
+
+$('nickForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const n = cleanName(nickEl.value);
+  if (!n) { statusEl.textContent = '닉네임은 1~12자로 정해주세요.'; nickEl.value = name; return; }
+  name = n; nickEl.value = n; keepName();
+  saveBtn.disabled = true;
+  try {
+    await ready;
+    const ref = col.doc(user.uid), cur = await ref.get();
+    if (cur.exists) { await ref.update({ name, at: firebase.firestore.FieldValue.serverTimestamp() }); await load(); }
+    statusEl.textContent = `닉네임을 저장했어요 · ${name}`;
+  } catch (err) {
+    statusEl.textContent = '닉네임을 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
+  } finally { saveBtn.disabled = false; }
+});
 })();
 </script>
 </body>
