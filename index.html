@@ -22,7 +22,9 @@
 :root[data-theme="dark"]{
   --bg:#0f1524; --ink:#e7ecf6; --muted:#97a3bd; --card:#1a2236; --line:#2b3550;
   --hy:#6fa6ea; --chili:#ff6a4f; --broth:#ffab52; --ok:#5cc58c; color-scheme:dark}
-html,body{min-height:100%}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 32px}
 .wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
