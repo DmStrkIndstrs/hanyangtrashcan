@@ -119,7 +119,7 @@ kbd{font-family:var(--body);font-size:12px;border:1px solid var(--line);border-b
     <div class="rank-head">
       <div>
         <h2 id="rankTitle">완벽 범죄 랭킹</h2>
-        <p class="rank-sub">세 장소를 모두 빠져나온 총 시간 순. 걸려서 다시 한 시간도 포함돼요.</p>
+        <p class="rank-sub">세 장소를 모두 빠져나온 시간의 합 순. 걸린 판은 기록에 들어가지 않아요.</p>
       </div>
       <form class="nick" id="nickForm">
         <label for="nick">닉네임</label>
@@ -386,14 +386,13 @@ function intro() {
     <button class="btn" data-act="go">잠입 시작</button></div>`);
 }
 function caught() {
-  G.state = 'caught'; G.shake = 0.4; dumpHeld = false; G.total += G.time;
+  G.state = 'caught'; G.shake = 0.4; dumpHeld = false;
   const p = G.player, type = p.carry ? p.carry.type : 'mala';
   for (const c of G.cleaners) { c.state = 'alert'; c.t = 99; c.lx = p.x; c.ly = p.y; }
   const c = G.cleaners.reduce((a, b) => Math.hypot(a.x - p.x, a.y - p.y) < Math.hypot(b.x - p.x, b.y - p.y) ? a : b);
   say(c, '학생!!', 99);
   show(`<div class="card"><h2>딱 걸렸다</h2><p class="quote">“${pick(CAUGHT[type])}”</p>
     <p>${G.L.name} · ${G.delivered}/${G.foods.length}개 처리 · ${fmt(G.time)}</p>
-    <p>걸린 시간도 랭킹 기록에 더해져요. 누적 ${fmt(G.total)}</p>
     <button class="btn" data-act="retry">다시 잠입하기</button></div>`);
 }
 function clearLevel() {
