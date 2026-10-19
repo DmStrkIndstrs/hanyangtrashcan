@@ -665,6 +665,7 @@ const ready = auth.signInAnonymously().then(c => {
   statusEl.textContent = '익명 로그인에 실패했어요. Firebase 콘솔에서 익명 로그인이 켜져 있는지 확인해주세요.';
   throw err;
 });
+ready.catch(() => {}); // 실패 안내는 위에서 했고, submit()이 다시 이 오류를 받아 처리한다
 
 function render() {
   if (!rows.length) { listEl.innerHTML = '<li class="empty">아직 기록이 없어요. 첫 완벽 범죄의 주인공이 되어보세요.</li>'; return; }
